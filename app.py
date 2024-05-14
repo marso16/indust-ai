@@ -1,12 +1,13 @@
+from fastapi import FastAPI, File, UploadFile, Form
+from fastapi.responses import JSONResponse
+from fastapi.middleware.cors import CORSMiddleware
+from pydantic import BaseModel
+from io import BytesIO 
 import pandas as pd
 import numpy as np
 import librosa
 from sklearn.preprocessing import StandardScaler, OneHotEncoder
 from keras.models import load_model
-from fastapi import FastAPI, File, UploadFile, Form
-from fastapi.responses import JSONResponse
-from pydantic import BaseModel
-from io import BytesIO 
 
 model = load_model("model.keras")
 
@@ -76,6 +77,15 @@ def get_features(audio_data, sample_rate):
 
 app = FastAPI()
 
+# Enable CORS
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["GET", "POST", "UPDATE", "DELETE"],
+    allow_headers=["*"],
+)
+
 class AudioInput(BaseModel):
     audio_file: UploadFile = File(...)
 
@@ -92,7 +102,13 @@ def predict_emotion(audio_data, sample_rate):
     emotion = encoder.categories_[0][emotion_index] 
     return emotion
 
-# --- API Endpoint ---
+# --- API Endpoints ---
+
+@app.get("/")
+async def root():
+    return {"Hello" : "World"}
+
+
 @app.post("/predict/", response_model=PredictionResult)
 async def predict_from_audio(audio_file: UploadFile = Form(...)):  
     try:
