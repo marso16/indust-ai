@@ -1,0 +1,21 @@
+version: "3.8"
+
+services:
+  backend: # Your Python service
+    build: ./backend # Assumes a Dockerfile in this directory
+    command: python app.py # Example command to run your app (adjust as needed)
+    ports:
+      - "8000:8000" # Expose port 8000 (typical for Flask, Fastapi etc.)
+    volumes:
+      - ./backend:/app # Mount your code for live updates (optional)
+
+  frontend: # Your React.js service
+    build: ./frontend
+    command: yarn run start # Standard command for development server
+    ports:
+      - "3000:3000" # Expose port 3000 (React's default)
+    volumes:
+      - ./frontend:/app
+    depends_on:
+      - backend # Ensure the backend starts first
+

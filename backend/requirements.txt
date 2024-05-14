@@ -1,0 +1,9 @@
+fastapi
+uvicorn
+pydantic
+pandas
+numpy
+librosa
+scikit-learn
+tensorflow
+keras
