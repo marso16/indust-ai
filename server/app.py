@@ -1,3 +1,4 @@
+import wave
 from fastapi import FastAPI, File, UploadFile, Form
 from fastapi.responses import JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
@@ -9,7 +10,7 @@ import librosa
 from sklearn.preprocessing import StandardScaler, OneHotEncoder
 from keras.models import load_model
 
-model = load_model("model.keras")
+model = load_model("serm.h5")
 
 data_path = pd.read_csv("data_path.csv")
 encoder = OneHotEncoder()
@@ -123,5 +124,31 @@ async def predict_from_audio(audio_file: UploadFile = Form(...)):
         # Pass sample_rate to get_features
         emotion = predict_emotion(audio_data, sample_rate)
         return {"emotion": emotion}
+    except Exception as e: 
+        return JSONResponse(status_code=500, content={"error": str(e)})
+
+@app.post("/save_audio/")
+async def save_audio_with_emotion(audio_file: UploadFile = Form(...)):  
+    try:
+        # Read audio data directly from the uploaded file into a BytesIO object
+        audio_content = await audio_file.read()
+        audio_bytes_io = BytesIO(audio_content)
+
+        # Load audio data from the BytesIO object 
+        audio_data, sample_rate = librosa.load(audio_bytes_io)
+
+        # Predict emotion using the modified get_features function
+        # Pass sample_rate to get_features
+        emotion = predict_emotion(audio_data, sample_rate)
+
+        # Save the audio file with the predicted emotion in the name
+        predicted_file_name = f"predicted_emotion_{emotion}.wav"
+        with wave.open(predicted_file_name, "wb") as wf:
+            wf.setnchannels(1)
+            wf.setsampwidth(2)
+            wf.setframerate(sample_rate)
+            wf.writeframes(audio_content)
+
+        return {"message": "Audio file saved with predicted emotion in the name.", "file_name": predicted_file_name}
     except Exception as e: 
         return JSONResponse(status_code=500, content={"error": str(e)})
